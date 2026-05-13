@@ -29,6 +29,33 @@
       --radius-sm: 8px;
       --shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
+    .dark-mode {
+      --yellow: #F5C100;
+      --yellow-dark: #FFD740;
+      --yellow-light: #2A2400;
+      --yellow-mid: #4A3F00;
+      --bg: #121210;
+      --surface: #1E1E1C;
+      --text: #F0F0EE;
+      --text-secondary: #A0A09A;
+      --text-tertiary: #606060;
+      --border: rgba(255,255,255,0.09);
+      --border-strong: rgba(255,255,255,0.18);
+      --shadow: 0 2px 12px rgba(0,0,0,0.4);
+    }
+    .dark-mode .home-top { background: #1A1600; }
+    .dark-mode .home-title { color: #F5E060; }
+    .dark-mode .home-greeting, .dark-mode .home-date { color: rgba(255,255,255,0.45); }
+    .dark-mode input[type="time"] { color-scheme: dark; }
+    .dark-mode .fav-chip { color: #D4AA00; }
+    .dark-mode .type-btn.selected { color: #D4AA00; }
+    .dark-mode .picker-month-btn.current { color: #1A1A00; }
+    .dark-mode .del-task-btn { border-color: #5C2020; background: #2A1010; }
+    .dark-mode .del-task-btn:active { background: #5C2020; }
+    .dark-mode .task-time-badge { background: var(--yellow-light); color: var(--yellow-dark); }
+
+    /* DARK MODE TOGGLE */
+    .dark-toggle { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--yellow-light); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.2s; }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
     
@@ -57,8 +84,25 @@
 
     /* MONTH NAV */
     .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 8px; background: var(--surface); }
-    .month-label { font-size: 16px; font-weight: 600; color: var(--text); }
+    .month-label { font-size: 16px; font-weight: 600; color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; transition: background 0.15s; }
+    .month-label:active { background: var(--yellow-light); }
+    .month-label-chevron { font-size: 11px; color: var(--text-tertiary); }
     .nav-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; }
+
+    /* MONTH PICKER OVERLAY */
+    .picker-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .picker-overlay.open { opacity: 1; pointer-events: all; }
+    .picker-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px 32px; width: 100%; max-width: 430px; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+    .picker-overlay.open .picker-sheet { transform: translateY(0); }
+    .picker-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 0 auto 16px; }
+    .picker-year-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 16px; }
+    .picker-year-label { font-size: 18px; font-weight: 700; color: var(--text); min-width: 60px; text-align: center; }
+    .picker-year-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 18px; }
+    .picker-year-btn:active { background: var(--yellow-light); }
+    .picker-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .picker-month-btn { padding: 10px 6px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: none; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .picker-month-btn:active { background: var(--yellow-light); border-color: var(--yellow); }
+    .picker-month-btn.current { background: var(--yellow); border-color: var(--yellow); color: #1A1A00; font-weight: 700; }
 
     /* CALENDAR GRID */
     .cal-wrap { background: var(--surface); padding: 0 12px 12px; }
@@ -84,7 +128,7 @@
     .task-name { font-size: 15px; font-weight: 600; color: var(--text); }
     .task-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
     .recur-badge { background: var(--yellow-light); color: var(--yellow-dark); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.3px; }
-    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); display: inline-block; }
+    .task-time-badge { background: var(--yellow-light); color: var(--yellow-dark); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 20px; }
     .task-chevron { color: var(--text-tertiary); font-size: 16px; }
     .add-btn { width: calc(100% - 40px); margin: 4px 20px 16px; border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 12px; cursor: pointer; background: none; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary); font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: border-color 0.15s, background 0.15s; }
     .add-btn:active { border-color: var(--yellow); background: var(--yellow-light); }
@@ -97,14 +141,14 @@
     .detail-title-wrap { flex: 1; }
     .detail-title { font-size: 18px; font-weight: 600; color: var(--text); }
     .detail-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .notif-row { padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .notif-row label { font-size: 14px; color: var(--text-secondary); flex: 1; }
-    .notif-time { font-size: 14px; font-weight: 500; color: var(--text); }
+    .time-row { padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .time-row label { font-size: 14px; color: var(--text-secondary); flex: 1; min-width: 80px; }
+    .time-inputs { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .time-separator { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
     input[type="time"] { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
-    .toggle { width: 44px; height: 26px; border-radius: 13px; background: #D9D9D4; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
-    .toggle.on { background: var(--yellow); }
-    .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
-    .toggle.on::after { transform: translateX(18px); }
+    input[type="time"]:focus { border-color: var(--yellow); outline: none; }
+    .time-clear-btn { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--text-tertiary); padding: 4px 6px; border-radius: var(--radius-sm); }
+    .time-clear-btn:active { background: var(--yellow-light); }
 
     /* CHECKLIST */
     .fav-section { padding: 12px 20px 0; }
@@ -182,8 +226,21 @@
     </div>
     <div class="month-nav">
       <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
-      <span class="month-label" id="month-label"></span>
+      <span class="month-label" id="month-label" onclick="openMonthPicker()"><span id="month-label-text"></span><span class="month-label-chevron">▼</span></span>
       <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+    </div>
+
+    <!-- Month Picker Overlay -->
+    <div class="picker-overlay" id="picker-overlay" onclick="handlePickerOverlayClick(event)">
+      <div class="picker-sheet" id="picker-sheet">
+        <div class="picker-handle"></div>
+        <div class="picker-year-row">
+          <button class="picker-year-btn" onclick="changePickerYear(-1)">&#8249;</button>
+          <span class="picker-year-label" id="picker-year-label"></span>
+          <button class="picker-year-btn" onclick="changePickerYear(1)">&#8250;</button>
+        </div>
+        <div class="picker-months" id="picker-months"></div>
+      </div>
     </div>
     <div class="cal-wrap">
       <div class="weekdays">
@@ -200,7 +257,8 @@
       <button class="add-btn" onclick="goAddTask()">＋ Add task</button>
       <div style="height:8px;"></div>
     </div>
-    <div style="border-top:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:flex-end; padding:10px 20px;">
+    <div style="border-top:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:space-between; padding:10px 20px;">
+      <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDarkMode()" title="Toggle dark mode">🌙</button>
       <button class="icon-btn" onclick="openCategories()" title="Manage categories">⚙️</button>
     </div>
   </div>
@@ -217,11 +275,16 @@
         </div>
         <button class="del-task-btn" onclick="deleteTask()" title="Delete task">🗑</button>
       </div>
-      <div class="notif-row">
-        <span style="font-size:16px;">🔔</span>
-        <label>Notify 1hr before</label>
-        <input type="time" id="notif-time" value="09:00" style="margin-right:8px;" onchange="saveNotifTime()" />
-        <button class="toggle" id="notif-toggle" onclick="toggleNotif()"></button>
+      <div class="notif-row" style="display:none"></div>
+      <div class="time-row">
+        <span style="font-size:16px;">⏱</span>
+        <label>Time (optional)</label>
+        <div class="time-inputs">
+          <input type="time" id="task-time-start" placeholder="Start" onchange="saveTaskTime()" />
+          <span class="time-separator">→</span>
+          <input type="time" id="task-time-end" placeholder="End" onchange="saveTaskTime()" />
+          <button class="time-clear-btn" onclick="clearTaskTime()" title="Clear time">✕</button>
+        </div>
       </div>
     </div>
     <div class="scroll" id="detail-scroll">
@@ -251,6 +314,12 @@
       <div id="recur-section" style="display:none;">
         <div class="section-title">Repeat on</div>
         <div class="recur-days" id="recur-days"></div>
+      </div>
+      <div class="section-title">Time (optional)</div>
+      <div style="padding: 0 20px 16px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <input type="time" id="add-time-start" style="flex:1;" />
+        <span style="font-size:14px;font-weight:600;color:var(--text-secondary);">→</span>
+        <input type="time" id="add-time-end" style="flex:1;" />
       </div>
       <button class="confirm-btn" id="confirm-add-btn" onclick="confirmAddTask()" disabled>Add to <span id="confirm-date-label"></span></button>
     </div>
@@ -331,7 +400,7 @@ function ensureRecurringForDate(ds) {
     if (!tasks[ds]) tasks[ds] = [];
     const exists = tasks[ds].find(t=>t.recurId===rule.id);
     if (!exists) {
-      tasks[ds].push({catId:rule.catId, notif:rule.notif, notifTime:rule.notifTime, items:[], recurId:rule.id});
+      tasks[ds].push({catId:rule.catId, startTime:rule.startTime||null, endTime:rule.endTime||null, items:[], recurId:rule.id});
     }
   });
 }
@@ -375,7 +444,7 @@ function renderHome() {
 
 function renderCalendar() {
   const label = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
-  document.getElementById('month-label').textContent = label;
+  document.getElementById('month-label-text').textContent = label;
   const grid = document.getElementById('days-grid');
   grid.innerHTML = '';
   const firstDow = (new Date(viewYear,viewMonth,1).getDay()+6)%7;
@@ -436,6 +505,45 @@ function changeMonth(dir) {
   renderCalendar();
 }
 
+// ═══════════════════ MONTH PICKER ═══════════════════
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+let pickerYear = new Date().getFullYear();
+
+function openMonthPicker() {
+  pickerYear = viewYear;
+  renderMonthPicker();
+  document.getElementById('picker-overlay').classList.add('open');
+}
+
+function closeMonthPicker() {
+  document.getElementById('picker-overlay').classList.remove('open');
+}
+
+function handlePickerOverlayClick(e) {
+  if (e.target === document.getElementById('picker-overlay')) closeMonthPicker();
+}
+
+function changePickerYear(dir) {
+  pickerYear += dir;
+  renderMonthPicker();
+}
+
+function renderMonthPicker() {
+  document.getElementById('picker-year-label').textContent = pickerYear;
+  const grid = document.getElementById('picker-months');
+  grid.innerHTML = MONTH_NAMES.map((name, i) => {
+    const isCurrent = (i === viewMonth && pickerYear === viewYear);
+    return `<button class="picker-month-btn${isCurrent?' current':''}" onclick="selectPickerMonth(${i})">${name.slice(0,3)}</button>`;
+  }).join('');
+}
+
+function selectPickerMonth(month) {
+  viewMonth = month;
+  viewYear = pickerYear;
+  renderCalendar();
+  closeMonthPicker();
+}
+
 function renderTaskList() {
   const d = new Date(selectedDate+'T12:00:00');
   const isToday = selectedDate===todayStr();
@@ -460,12 +568,12 @@ function renderTaskList() {
     const card = document.createElement('div');
     card.className='task-card';
     const recurBadge = task.recurId ? '<span class="recur-badge">Recurring</span>' : '';
-    const notifDot = task.notif ? '<span class="notif-dot"></span>' : '';
+    const timeBadge = task.startTime ? `<span class="task-time-badge">${task.startTime}${task.endTime?' → '+task.endTime:''}</span>` : '';
     card.innerHTML=`
       <div class="task-icon-wrap" style="background:${cat.color}">${cat.emoji}</div>
       <div class="task-info">
         <div class="task-name">${cat.name}</div>
-        <div class="task-meta">${total>0?`${done}/${total} done`:'No items yet'} ${recurBadge} ${notifDot}</div>
+        <div class="task-meta">${total>0?`${done}/${total} done`:'No items yet'} ${recurBadge} ${timeBadge}</div>
       </div>
       <span class="task-chevron">›</span>`;
     card.onclick=()=>openTask(selectedDate,i);
@@ -487,9 +595,8 @@ function openTask(ds, idx) {
   const d=new Date(ds+'T12:00:00');
   document.getElementById('detail-sub').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
 
-  const tog=document.getElementById('notif-toggle');
-  tog.className='toggle'+(task.notif?' on':'');
-  document.getElementById('notif-time').value=task.notifTime||'09:00';
+  document.getElementById('task-time-start').value = task.startTime || '';
+  document.getElementById('task-time-end').value = task.endTime || '';
 
   renderFavChips(task.catId);
   renderChecklist();
@@ -569,19 +676,24 @@ function addItemText(text) {
   renderTaskList();
 }
 
-function toggleNotif() {
+function saveTaskTime() {
   const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
-  task.notif=!task.notif;
-  const tog=document.getElementById('notif-toggle');
-  tog.className='toggle'+(task.notif?' on':'');
-  if(task.notif) scheduleNotif(task);
+  if(!task) return;
+  task.startTime = document.getElementById('task-time-start').value || null;
+  task.endTime = document.getElementById('task-time-end').value || null;
   save();
+  renderTaskList();
 }
 
-function saveNotifTime() {
+function clearTaskTime() {
   const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
-  task.notifTime=document.getElementById('notif-time').value;
+  if(!task) return;
+  task.startTime = null;
+  task.endTime = null;
+  document.getElementById('task-time-start').value = '';
+  document.getElementById('task-time-end').value = '';
   save();
+  renderTaskList();
 }
 
 function deleteTask() {
@@ -611,19 +723,6 @@ function deleteTask() {
   goBack();
 }
 
-function scheduleNotif(task) {
-  if(!('Notification' in window)) return;
-  Notification.requestPermission().then(p=>{
-    if(p!=='granted') return;
-    const [h,m]=task.notifTime.split(':').map(Number);
-    const cat=getCat(task.catId);
-    const d=new Date(currentTaskRef.date+'T12:00:00');
-    d.setHours(h-1,m,0,0);
-    const now=new Date();
-    const delay=d-now;
-    if(delay>0) setTimeout(()=>{new Notification('ChrisCalendar',{body:`Reminder: ${cat.name} task today`,icon:'icon.svg'});},delay);
-  });
-}
 
 // ═══════════════════ ADD TASK ═══════════════════
 function goAddTask() {
@@ -699,16 +798,17 @@ function toggleRecurDay(i) {
 
 function confirmAddTask() {
   if(!addTaskCatId) return;
+  const startTime = document.getElementById('add-time-start').value || null;
+  const endTime = document.getElementById('add-time-end').value || null;
   if(addTaskType==='recur') {
     if(addTaskDays.length===0) { alert('Pick at least one day for recurring task.'); return; }
-    const rule={id:'r'+Date.now(), catId:addTaskCatId, days:[...addTaskDays], notif:false, notifTime:'09:00'};
+    const rule={id:'r'+Date.now(), catId:addTaskCatId, days:[...addTaskDays], startTime, endTime};
     recurringRules.push(rule);
-    // inject today and selected date
     ensureRecurringForDate(selectedDate);
   } else {
     if(!tasks[selectedDate]) tasks[selectedDate]=[];
     const already=tasks[selectedDate].find(t=>t.catId===addTaskCatId&&!t.recurId);
-    if(!already) tasks[selectedDate].push({catId:addTaskCatId,notif:false,notifTime:'09:00',items:[]});
+    if(!already) tasks[selectedDate].push({catId:addTaskCatId, startTime, endTime, items:[]});
   }
   save();
   goBack();
@@ -766,7 +866,28 @@ function openCategories() {
   goScreen('screen-categories');
 }
 
+// ═══════════════════ DARK MODE ═══════════════════
+let darkMode = localStorage.getItem('cc_dark') === '1';
+
+function applyDarkMode() {
+  const app = document.getElementById('app');
+  if (darkMode) {
+    app.classList.add('dark-mode');
+    document.getElementById('dark-toggle-btn').textContent = '☀️';
+  } else {
+    app.classList.remove('dark-mode');
+    document.getElementById('dark-toggle-btn').textContent = '🌙';
+  }
+}
+
+function toggleDarkMode() {
+  darkMode = !darkMode;
+  localStorage.setItem('cc_dark', darkMode ? '1' : '0');
+  applyDarkMode();
+}
+
 // ═══════════════════ INIT ═══════════════════
+applyDarkMode();
 renderHome();
 </script>
 <script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}</script>
