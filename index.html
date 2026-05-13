@@ -345,6 +345,7 @@ function goScreen(id) {
   document.getElementById(id).classList.remove('behind');
   document.getElementById(id).classList.add('active');
   screenStack.push(id);
+  history.pushState({screen: id}, '');
 }
 
 function goBack() {
@@ -356,6 +357,13 @@ function goBack() {
   document.getElementById(prev).classList.add('active');
   renderHome();
 }
+
+// Handle Android hardware back button
+window.addEventListener('popstate', function(e) {
+  if (screenStack.length > 1) {
+    goBack();
+  }
+});
 
 // ═══════════════════ HOME ═══════════════════
 function renderHome() {
