@@ -201,7 +201,7 @@
       <div style="height:8px;"></div>
     </div>
     <div style="border-top:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:flex-end; padding:10px 20px;">
-      <button class="icon-btn" onclick="goScreen('screen-categories')" title="Manage categories">⚙️</button>
+      <button class="icon-btn" onclick="openCategories()" title="Manage categories">⚙️</button>
     </div>
   </div>
 
@@ -651,7 +651,10 @@ function renderAddTask() {
   }
 
   document.getElementById('add-task-fav-section').innerHTML=favHtml;
-  document.getElementById('add-task-all-section').innerHTML=allHtml;
+  document.getElementById('add-task-all-section').innerHTML=allHtml + `<div class="cat-option" onclick="openCategories()">
+    <div class="cat-icon" style="background:var(--yellow-light)">➕</div>
+    <span class="cat-name" style="color:var(--text-secondary)">Create new category…</span>
+  </div>`;
 
   document.getElementById('type-once').className='type-btn'+(addTaskType==='once'?' selected':'');
   document.getElementById('type-recur').className='type-btn'+(addTaskType==='recur'?' selected':'');
@@ -750,12 +753,10 @@ function deleteCategory(id) {
   renderCategoriesScreen();
 }
 
-// intercept goScreen for categories
-const origGoScreen=goScreen;
-document.querySelector('[onclick="goScreen(\'screen-categories\')"]').onclick=function(){
+function openCategories() {
   renderCategoriesScreen();
-  origGoScreen('screen-categories');
-};
+  goScreen('screen-categories');
+}
 
 // ═══════════════════ INIT ═══════════════════
 renderHome();
