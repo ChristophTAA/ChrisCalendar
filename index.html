@@ -97,14 +97,7 @@
     .detail-title-wrap { flex: 1; }
     .detail-title { font-size: 18px; font-weight: 600; color: var(--text); }
     .detail-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-    .notif-row { padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-    .notif-row label { font-size: 14px; color: var(--text-secondary); flex: 1; }
-    .notif-time { font-size: 14px; font-weight: 500; color: var(--text); }
-    input[type="time"] { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
-    .toggle { width: 44px; height: 26px; border-radius: 13px; background: #D9D9D4; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
-    .toggle.on { background: var(--yellow); }
-    .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
-    .toggle.on::after { transform: translateX(18px); }
+    .notif-dot { display: none; }
 
     /* CHECKLIST */
     .fav-section { padding: 12px 20px 0; }
@@ -199,6 +192,32 @@
     .modal-btn { flex: 1; padding: 12px; border-radius: var(--radius); font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; border: none; }
     .modal-btn.primary { background: var(--yellow); color: #1A1A00; }
     .modal-btn.secondary { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); }
+    /* VIEW TOGGLE */
+    .view-toggle { display: flex; gap: 4px; background: var(--bg); border-radius: 20px; padding: 3px; }
+    .view-btn { flex: 1; padding: 5px 12px; border-radius: 16px; border: none; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--text-secondary); background: none; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .view-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+    /* WEEKLY LIST VIEW */
+    .week-list { padding: 0 20px 16px; }
+    .week-list-day { margin-bottom: 12px; }
+    .wld-header { display: flex; align-items: center; gap: 8px; padding: 8px 0 4px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+    .wld-date-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--text); flex-shrink: 0; }
+    .wld-date-num.today { background: var(--yellow); color: #1A1A00; }
+    .wld-date-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+    .wld-empty { font-size: 12px; color: var(--text-tertiary); padding: 2px 0 4px; }
+    .wld-task { display: flex; align-items: center; gap: 10px; padding: 7px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 5px; cursor: pointer; transition: border-color 0.15s; }
+    .wld-task:active { border-color: var(--yellow); }
+    .wld-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .wld-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
+    .wld-time { font-size: 11px; color: var(--text-secondary); font-weight: 500; }
+    .wld-meta { font-size: 11px; color: var(--text-tertiary); }
+
+    /* TIME PICKER in Add Task */
+    .time-pick-row { display: flex; align-items: center; gap: 10px; padding: 10px 20px 14px; }
+    .time-pick-label { font-size: 14px; color: var(--text-secondary); flex: 1; }
+    .time-pick-input { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 6px 10px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; }
+    .time-pick-input:focus { border-color: var(--yellow); }
+    .time-clear-btn { font-size: 12px; color: var(--text-tertiary); background: none; border: none; cursor: pointer; padding: 4px; font-family: 'DM Sans', sans-serif; }
   </style>
 </head>
 <body>
@@ -218,34 +237,39 @@
       </div>
     </div>
     <div class="month-nav">
-      <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+      <button class="nav-btn" id="prev-btn" onclick="changeMonth(-1)">&#8249;</button>
       <span class="month-label" id="month-label"></span>
-      <div style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:6px;">
         <button class="today-chip hidden" id="today-chip" onclick="goToToday()">Today</button>
-        <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
-      </div>
-    </div>
-    <div class="cal-wrap">
-      <div class="weekdays">
-        <div class="weekday">M</div><div class="weekday">T</div><div class="weekday">W</div>
-        <div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div><div class="weekday">S</div>
-      </div>
-      <div class="days-grid" id="days-grid"></div>
-    </div>
-
-    <!-- WEEK STRIP -->
-    <div class="week-strip">
-      <div class="week-strip-header">
-        <span class="week-strip-label" id="week-strip-label">Week of …</span>
-        <div class="week-strip-nav">
-          <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
-          <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
+        <div class="view-toggle">
+          <button class="view-btn active" id="vbtn-month" onclick="setView('month')">Month</button>
+          <button class="view-btn" id="vbtn-week" onclick="setView('week')">Week</button>
         </div>
+        <button class="nav-btn" id="next-btn" onclick="changeMonth(1)">&#8250;</button>
       </div>
-      <div class="week-cells" id="week-cells"></div>
     </div>
+    <!-- MONTH VIEW -->
+    <div id="view-month" class="scroll">
+      <div class="cal-wrap" style="flex-shrink:0;">
+        <div class="weekdays">
+          <div class="weekday">M</div><div class="weekday">T</div><div class="weekday">W</div>
+          <div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div><div class="weekday">S</div>
+        </div>
+        <div class="days-grid" id="days-grid"></div>
+      </div>
 
-    <div class="scroll">
+      <!-- WEEK STRIP -->
+      <div class="week-strip" style="flex-shrink:0;">
+        <div class="week-strip-header">
+          <span class="week-strip-label" id="week-strip-label">Week of …</span>
+          <div class="week-strip-nav">
+            <button class="week-nav-btn" onclick="changeWeek(-1)">&#8249;</button>
+            <button class="week-nav-btn" onclick="changeWeek(1)">&#8250;</button>
+          </div>
+        </div>
+        <div class="week-cells" id="week-cells"></div>
+      </div>
+
       <div class="day-section">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div class="day-section-label" id="selected-label" style="margin-bottom:0;"></div>
@@ -253,6 +277,20 @@
         </div>
         <div id="task-list"></div>
       </div>
+      <button class="add-btn" onclick="goAddTask()">＋ Add task</button>
+      <div style="height:8px;"></div>
+    </div>
+
+    <!-- WEEK LIST VIEW -->
+    <div id="view-week" style="display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 6px;">
+        <span style="font-size:11px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.4px;" id="week-view-label">Week</span>
+        <div style="display:flex;gap:6px;">
+          <button class="week-nav-btn" onclick="changeWeekView(-1)">&#8249;</button>
+          <button class="week-nav-btn" onclick="changeWeekView(1)">&#8250;</button>
+        </div>
+      </div>
+      <div class="week-list" id="week-list"></div>
       <button class="add-btn" onclick="goAddTask()">＋ Add task</button>
       <div style="height:8px;"></div>
     </div>
@@ -273,12 +311,7 @@
         </div>
         <button class="del-task-btn" onclick="deleteTask()" title="Delete task">🗑</button>
       </div>
-      <div class="notif-row">
-        <span style="font-size:16px;">🔔</span>
-        <label>Notify 1hr before</label>
-        <input type="time" id="notif-time" value="09:00" style="margin-right:8px;" onchange="saveNotifTime()" />
-        <button class="toggle" id="notif-toggle" onclick="toggleNotif()"></button>
-      </div>
+
     </div>
     <div class="scroll" id="detail-scroll">
       <div class="fav-section" id="fav-section"></div>
@@ -307,6 +340,12 @@
       <div id="recur-section" style="display:none;">
         <div class="section-title">Repeat on</div>
         <div class="recur-days" id="recur-days"></div>
+      </div>
+      <div class="time-pick-row" id="time-pick-row">
+        <span style="font-size:16px;">🕐</span>
+        <label class="time-pick-label">Set time (optional)</label>
+        <input type="time" class="time-pick-input" id="add-task-time" />
+        <button class="time-clear-btn" onclick="clearTaskTime()">✕ Clear</button>
       </div>
       <button class="confirm-btn" id="confirm-add-btn" onclick="confirmAddTask()" disabled>Add to <span id="confirm-date-label"></span></button>
     </div>
@@ -374,6 +413,8 @@ let addTaskCatId = null;
 let addTaskType = 'once';
 let addTaskDays = [];
 let currentTaskRef = null; // {date, index}
+let currentView = 'month'; // 'month' | 'week'
+let weekViewOffset = 0; // weeks from selected date
 
 function save() {
   localStorage.setItem('cc_cats', JSON.stringify(categories));
@@ -440,9 +481,13 @@ window.addEventListener('popstate', function(e) {
 function renderHome() {
   const today = new Date();
   document.getElementById('home-date').textContent = today.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  renderCalendar();
-  renderWeekStrip();
-  renderTaskList();
+  if (currentView === 'month') {
+    renderCalendar();
+    renderWeekStrip();
+    renderTaskList();
+  } else {
+    renderWeekView();
+  }
   updateTodayChip();
   startClock();
 }
@@ -514,18 +559,28 @@ function adjustColor(hex, amt) {
 
 function selectDate(ds) {
   selectedDate = ds;
-  renderCalendar();
-  renderWeekStrip();
-  renderTaskList();
+  weekStripOffset = 0;
+  weekViewOffset = 0;
+  if (currentView === 'month') {
+    renderCalendar();
+    renderWeekStrip();
+    renderTaskList();
+  } else {
+    renderWeekView();
+  }
   updateTodayChip();
 }
 
 function changeMonth(dir) {
-  viewMonth+=dir;
-  if(viewMonth<0){viewMonth=11;viewYear--;}
-  if(viewMonth>11){viewMonth=0;viewYear++;}
-  renderCalendar();
-  renderWeekStrip();
+  if (currentView === 'month') {
+    viewMonth+=dir;
+    if(viewMonth<0){viewMonth=11;viewYear--;}
+    if(viewMonth>11){viewMonth=0;viewYear++;}
+    renderCalendar();
+    renderWeekStrip();
+  } else {
+    changeWeekView(dir);
+  }
   updateTodayChip();
 }
 
@@ -557,12 +612,12 @@ function renderTaskList() {
     const card = document.createElement('div');
     card.className='task-card';
     const recurBadge = task.recurId ? '<span class="recur-badge">Recurring</span>' : '';
-    const notifDot = task.notif ? '<span class="notif-dot"></span>' : '';
+
     card.innerHTML=`
       <div class="task-icon-wrap" style="background:${cat.color}">${cat.emoji}</div>
       <div class="task-info">
         <div class="task-name">${cat.name}</div>
-        <div class="task-meta">${total>0?`${done}/${total} done`:'No items yet'} ${recurBadge} ${notifDot}</div>
+        <div class="task-meta">${total>0?`${done}/${total} done`:'No items yet'}${task.time?' · '+task.time:''} ${recurBadge}</div>
       </div>
       <span class="task-chevron">›</span>`;
     card.onclick=()=>openTask(selectedDate,i);
@@ -582,11 +637,8 @@ function openTask(ds, idx) {
   document.getElementById('detail-icon').textContent=cat.emoji;
   document.getElementById('detail-title-text').textContent=cat.name;
   const d=new Date(ds+'T12:00:00');
-  document.getElementById('detail-sub').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-
-  const tog=document.getElementById('notif-toggle');
-  tog.className='toggle'+(task.notif?' on':'');
-  document.getElementById('notif-time').value=task.notifTime||'09:00';
+  const timeStr = task.time ? ' · ' + task.time : '';
+  document.getElementById('detail-sub').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+timeStr;
 
   renderFavChips(task.catId);
   renderChecklist();
@@ -666,21 +718,6 @@ function addItemText(text) {
   renderTaskList();
 }
 
-function toggleNotif() {
-  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
-  task.notif=!task.notif;
-  const tog=document.getElementById('notif-toggle');
-  tog.className='toggle'+(task.notif?' on':'');
-  if(task.notif) scheduleNotif(task);
-  save();
-}
-
-function saveNotifTime() {
-  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
-  task.notifTime=document.getElementById('notif-time').value;
-  save();
-}
-
 function deleteTask() {
   const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
   const cat=getCat(task.catId);
@@ -708,25 +745,13 @@ function deleteTask() {
   goBack();
 }
 
-function scheduleNotif(task) {
-  if(!('Notification' in window)) return;
-  Notification.requestPermission().then(p=>{
-    if(p!=='granted') return;
-    const [h,m]=task.notifTime.split(':').map(Number);
-    const cat=getCat(task.catId);
-    const d=new Date(currentTaskRef.date+'T12:00:00');
-    d.setHours(h-1,m,0,0);
-    const now=new Date();
-    const delay=d-now;
-    if(delay>0) setTimeout(()=>{new Notification('ChrisCalendar',{body:`Reminder: ${cat.name} task today`,icon:'icon.svg'});},delay);
-  });
-}
-
 // ═══════════════════ ADD TASK ═══════════════════
 function goAddTask() {
   addTaskCatId=null;
   addTaskType='once';
   addTaskDays=[];
+  const timeInput = document.getElementById('add-task-time');
+  if (timeInput) timeInput.value = '';
   renderAddTask();
   goScreen('screen-add-task');
 }
@@ -796,19 +821,23 @@ function toggleRecurDay(i) {
 
 function confirmAddTask() {
   if(!addTaskCatId) return;
+  const timeVal = document.getElementById('add-task-time').value || null;
   if(addTaskType==='recur') {
     if(addTaskDays.length===0) { alert('Pick at least one day for recurring task.'); return; }
-    const rule={id:'r'+Date.now(), catId:addTaskCatId, days:[...addTaskDays], notif:false, notifTime:'09:00'};
+    const rule={id:'r'+Date.now(), catId:addTaskCatId, days:[...addTaskDays]};
     recurringRules.push(rule);
-    // inject today and selected date
     ensureRecurringForDate(selectedDate);
   } else {
     if(!tasks[selectedDate]) tasks[selectedDate]=[];
     const already=tasks[selectedDate].find(t=>t.catId===addTaskCatId&&!t.recurId);
-    if(!already) tasks[selectedDate].push({catId:addTaskCatId,notif:false,notifTime:'09:00',items:[]});
+    if(!already) tasks[selectedDate].push({catId:addTaskCatId, time:timeVal, items:[]});
   }
   save();
   goBack();
+}
+
+function clearTaskTime() {
+  document.getElementById('add-task-time').value = '';
 }
 
 // ═══════════════════ CATEGORIES SCREEN ═══════════════════
@@ -919,9 +948,13 @@ function updateTodayChip() {
   if (!chip) return;
   const today = todayStr();
   const todayD = new Date(today + 'T12:00:00');
-  const isCurrentMonth = (viewYear === todayD.getFullYear() && viewMonth === todayD.getMonth());
-  const isSelectedToday = selectedDate === today;
-  chip.classList.toggle('hidden', isCurrentMonth && isSelectedToday);
+  if (currentView === 'month') {
+    const isCurrentMonth = (viewYear === todayD.getFullYear() && viewMonth === todayD.getMonth());
+    const isSelectedToday = selectedDate === today;
+    chip.classList.toggle('hidden', isCurrentMonth && isSelectedToday);
+  } else {
+    chip.classList.toggle('hidden', weekViewOffset === 0 && selectedDate === today);
+  }
 }
 
 function goToToday() {
@@ -930,10 +963,15 @@ function goToToday() {
   viewYear = d.getFullYear();
   viewMonth = d.getMonth();
   weekStripOffset = 0;
+  weekViewOffset = 0;
   selectedDate = today;
-  renderCalendar();
-  renderWeekStrip();
-  renderTaskList();
+  if (currentView === 'month') {
+    renderCalendar();
+    renderWeekStrip();
+    renderTaskList();
+  } else {
+    renderWeekView();
+  }
   updateTodayChip();
 }
 
@@ -971,8 +1009,7 @@ function confirmCopyDay() {
     if (!already) {
       tasks[dest].push({
         catId: t.catId,
-        notif: t.notif,
-        notifTime: t.notifTime,
+        time: t.time || null,
         items: t.items.map(function(item){ return {text: item.text, done: false, fav: item.fav}; })
       });
     }
@@ -983,11 +1020,114 @@ function confirmCopyDay() {
   viewYear = d.getFullYear();
   viewMonth = d.getMonth();
   weekStripOffset = 0;
+  weekViewOffset = 0;
   selectedDate = dest;
-  renderCalendar();
-  renderWeekStrip();
-  renderTaskList();
+  if (currentView === 'month') {
+    renderCalendar();
+    renderWeekStrip();
+    renderTaskList();
+  } else {
+    renderWeekView();
+  }
   updateTodayChip();
+}
+
+
+// ═══════════════════ VIEW TOGGLE ═══════════════════
+function setView(v) {
+  currentView = v;
+  document.getElementById('view-month').style.display = v === 'month' ? 'flex' : 'none';
+  document.getElementById('view-month').style.flexDirection = 'column';
+  document.getElementById('view-week').style.display = v === 'week' ? 'block' : 'none';
+  document.getElementById('vbtn-month').className = 'view-btn' + (v === 'month' ? ' active' : '');
+  document.getElementById('vbtn-week').className = 'view-btn' + (v === 'week' ? ' active' : '');
+  // adjust nav labels
+  if (v === 'month') {
+    renderCalendar();
+    renderWeekStrip();
+    renderTaskList();
+  } else {
+    weekViewOffset = 0;
+    renderWeekView();
+  }
+  updateTodayChip();
+}
+
+function changeWeekView(dir) {
+  weekViewOffset += dir;
+  renderWeekView();
+  updateTodayChip();
+}
+
+function renderWeekView() {
+  const base = getWeekStart(selectedDate, weekViewOffset);
+  const today = todayStr();
+  const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const weekEnd = new Date(base);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const lbl = document.getElementById('week-view-label');
+  if (lbl) lbl.textContent = fmt(base) + ' – ' + fmt(weekEnd);
+
+  // Also update month-label for week view
+  const ml = document.getElementById('month-label');
+  if (ml) ml.textContent = base.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+
+  const container = document.getElementById('week-list');
+  if (!container) return;
+  container.innerHTML = '';
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i);
+    const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    ensureRecurringForDate(ds);
+    const dayTasks = tasks[ds] || [];
+
+    const dayEl = document.createElement('div');
+    dayEl.className = 'week-list-day';
+
+    const isToday = ds === today;
+    const isSelected = ds === selectedDate;
+    const numClass = 'wld-date-num' + (isToday ? ' today' : '');
+    const labelStyle = isSelected ? 'color:var(--yellow-dark);font-weight:700;' : '';
+
+    dayEl.innerHTML = '<div class="wld-header">'
+      + '<div class="' + numClass + '">' + d.getDate() + '</div>'
+      + '<div class="wld-date-label" style="' + labelStyle + '">' + DAY_NAMES[i] + ' ' + d.toLocaleDateString('en-GB',{month:'short'}) + '</div>'
+      + '</div>';
+
+    if (dayTasks.length === 0) {
+      dayEl.innerHTML += '<div class="wld-empty">No tasks</div>';
+    } else {
+      // sort tasks by time
+      const sorted = [...dayTasks].sort((a,b) => {
+        if (!a.time && !b.time) return 0;
+        if (!a.time) return 1;
+        if (!b.time) return -1;
+        return a.time.localeCompare(b.time);
+      });
+      sorted.forEach((task, idx) => {
+        const realIdx = dayTasks.indexOf(task);
+        const cat = getCat(task.catId);
+        if (!cat) return;
+        const done = task.items.filter(x=>x.done).length;
+        const total = task.items.length;
+        const tEl = document.createElement('div');
+        tEl.className = 'wld-task';
+        tEl.innerHTML = '<div class="wld-icon" style="background:' + cat.color + '">' + cat.emoji + '</div>'
+          + '<div class="wld-name">' + cat.name + '</div>'
+          + (task.time ? '<div class="wld-time">' + task.time + '</div>' : '')
+          + '<div class="wld-meta">' + (total > 0 ? done + '/' + total : '') + '</div>';
+        (function(dateStr, taskIdx){ tEl.onclick = function(){ selectedDate = dateStr; openTask(dateStr, taskIdx); }; })(ds, realIdx);
+        dayEl.appendChild(tEl);
+      });
+    }
+
+    // tap on day header selects it
+    (function(dateStr){ dayEl.querySelector('.wld-header').onclick = function(){ selectedDate = dateStr; renderWeekView(); }; })(ds);
+    container.appendChild(dayEl);
+  }
 }
 
 // ═══════════════════ INIT ═══════════════════
