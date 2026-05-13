@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#F5C100" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ChrisCalendar" />
+  <title>ChrisCalendar</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --yellow: #F5C100;
+      --yellow-dark: #D4A600;
+      --yellow-light: #FFF8D6;
+      --yellow-mid: #FFE566;
+      --bg: #FAFAF8;
+      --surface: #FFFFFF;
+      --text: #1A1A18;
+      --text-secondary: #6B6B65;
+      --text-tertiary: #ADADAA;
+      --border: rgba(0,0,0,0.08);
+      --border-strong: rgba(0,0,0,0.15);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); }
+    
+    #app { height: 100dvh; display: flex; flex-direction: column; max-width: 430px; margin: 0 auto; position: relative; overflow: hidden; }
+    
+    .screen { position: absolute; inset: 0; display: flex; flex-direction: column; background: var(--bg); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); pointer-events: none; overflow: hidden; }
+    .screen.active { transform: translateX(0); pointer-events: all; }
+    .screen.behind { transform: translateX(-30%); pointer-events: none; }
+
+    /* HEADER */
+    .header { display: flex; align-items: center; gap: 10px; padding: 16px 20px 12px; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .header-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); flex: 1; }
+    .header-sub { font-size: 16px; font-weight: 600; color: var(--text); flex: 1; }
+    .back-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 18px; flex-shrink: 0; }
+    .icon-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--yellow-light); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+
+    /* SCROLL AREA */
+    .scroll { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .scroll::-webkit-scrollbar { display: none; }
+
+    /* HOME SCREEN */
+    .home-top { background: var(--yellow); padding: 20px 20px 16px; }
+    .home-greeting { font-size: 13px; color: rgba(0,0,0,0.55); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+    .home-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: #1A1A00; }
+    .home-date { font-size: 13px; color: rgba(0,0,0,0.5); margin-top: 2px; }
+
+    /* MONTH NAV */
+    .month-nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 8px; background: var(--surface); }
+    .month-label { font-size: 16px; font-weight: 600; color: var(--text); }
+    .nav-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 14px; }
+
+    /* CALENDAR GRID */
+    .cal-wrap { background: var(--surface); padding: 0 12px 12px; }
+    .weekdays { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 4px; }
+    .weekday { text-align: center; font-size: 11px; font-weight: 600; color: var(--text-tertiary); padding: 4px 0; text-transform: uppercase; letter-spacing: 0.3px; }
+    .days-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+    .day-cell { aspect-ratio: 1; border-radius: var(--radius-sm); display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px 2px 3px; cursor: pointer; position: relative; transition: background 0.15s; }
+    .day-cell:active { background: var(--yellow-light); }
+    .day-cell.selected { background: var(--yellow-light); }
+    .day-cell.today .day-num { background: var(--yellow); color: #1A1A00; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+    .day-cell.other-month .day-num { color: var(--text-tertiary); }
+    .day-num { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1; margin-bottom: 3px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; }
+    .dot-row { display: flex; gap: 2px; justify-content: center; flex-wrap: wrap; max-width: 100%; }
+    .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+    /* SELECTED DAY TASKS */
+    .day-section { padding: 16px 20px 8px; }
+    .day-section-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: border-color 0.15s, box-shadow 0.15s; }
+    .task-card:active { border-color: var(--yellow); box-shadow: 0 0 0 3px var(--yellow-light); }
+    .task-icon-wrap { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .task-info { flex: 1; min-width: 0; }
+    .task-name { font-size: 15px; font-weight: 600; color: var(--text); }
+    .task-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
+    .recur-badge { background: var(--yellow-light); color: var(--yellow-dark); font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .notif-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--yellow); display: inline-block; }
+    .task-chevron { color: var(--text-tertiary); font-size: 16px; }
+    .add-btn { width: calc(100% - 40px); margin: 4px 20px 16px; border: 1.5px dashed var(--border-strong); border-radius: var(--radius); padding: 12px; cursor: pointer; background: none; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--text-secondary); font-size: 14px; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: border-color 0.15s, background 0.15s; }
+    .add-btn:active { border-color: var(--yellow); background: var(--yellow-light); }
+    .empty-day { text-align: center; padding: 24px 20px; color: var(--text-tertiary); font-size: 14px; }
+
+    /* TASK DETAIL */
+    .detail-header-wrap { flex-shrink: 0; }
+    .detail-top { padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .detail-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .detail-title-wrap { flex: 1; }
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text); }
+    .detail-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+    .notif-row { padding: 10px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+    .notif-row label { font-size: 14px; color: var(--text-secondary); flex: 1; }
+    .notif-time { font-size: 14px; font-weight: 500; color: var(--text); }
+    input[type="time"] { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+    .toggle { width: 44px; height: 26px; border-radius: 13px; background: #D9D9D4; border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+    .toggle.on { background: var(--yellow); }
+    .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+    .toggle.on::after { transform: translateX(18px); }
+
+    /* CHECKLIST */
+    .fav-section { padding: 12px 20px 0; }
+    .fav-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .fav-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+    .fav-chip { background: var(--yellow-light); border: 1px solid var(--yellow-mid); border-radius: 20px; padding: 5px 12px; font-size: 13px; font-weight: 500; color: #7A6000; cursor: pointer; transition: background 0.15s; }
+    .fav-chip:active { background: var(--yellow-mid); }
+    .checklist-wrap { padding: 8px 20px; }
+    .check-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .check-item:last-child { border-bottom: none; }
+    .checkbox { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-strong); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+    .checkbox.done { background: var(--yellow); border-color: var(--yellow); }
+    .check-label { flex: 1; font-size: 15px; color: var(--text); cursor: pointer; transition: color 0.15s; }
+    .check-label.done { text-decoration: line-through; color: var(--text-tertiary); }
+    .star-btn { background: none; border: none; cursor: pointer; font-size: 18px; padding: 2px; color: var(--text-tertiary); }
+    .star-btn.fav { color: var(--yellow-dark); }
+    .del-btn { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--text-tertiary); padding: 4px; }
+    .add-item-row { display: flex; gap: 8px; padding: 12px 20px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+    .add-item-row input { flex: 1; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; }
+    .add-item-row input:focus { border-color: var(--yellow); }
+    .add-item-row button { background: var(--yellow); border: none; border-radius: var(--radius-sm); padding: 10px 16px; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: #1A1A00; cursor: pointer; }
+
+    /* ADD TASK SCREEN */
+    .section-title { font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 20px 8px; }
+    .cat-option { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+    .cat-option:active { background: var(--yellow-light); }
+    .cat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .cat-name { flex: 1; font-size: 15px; font-weight: 500; color: var(--text); }
+    .cat-star { background: none; border: none; cursor: pointer; font-size: 18px; color: var(--text-tertiary); padding: 4px; }
+    .cat-star.fav { color: var(--yellow-dark); }
+
+    /* TYPE PICKER */
+    .type-pick { display: flex; gap: 8px; padding: 12px 20px; }
+    .type-btn { flex: 1; padding: 10px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: none; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .type-btn.selected { border-color: var(--yellow); background: var(--yellow-light); color: #7A6000; }
+
+    /* RECUR OPTIONS */
+    .recur-days { display: flex; gap: 6px; padding: 0 20px 16px; flex-wrap: wrap; }
+    .day-toggle { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--border); background: none; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .day-toggle.on { border-color: var(--yellow); background: var(--yellow); color: #1A1A00; }
+    .confirm-btn { margin: 8px 20px 20px; width: calc(100% - 40px); padding: 14px; background: var(--yellow); border: none; border-radius: var(--radius); font-size: 16px; font-weight: 600; font-family: 'DM Sans', sans-serif; color: #1A1A00; cursor: pointer; }
+    .confirm-btn:disabled { opacity: 0.4; }
+
+    /* CATEGORIES SCREEN */
+    .cat-manage { padding: 8px 0; }
+    .cat-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+    .cat-row-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .cat-row-name { flex: 1; font-size: 15px; font-weight: 500; color: var(--text); }
+    .new-cat-form { padding: 16px 20px; border-top: 1px solid var(--border); }
+    .new-cat-form input { width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; margin-bottom: 8px; }
+    .new-cat-form input:focus { border-color: var(--yellow); }
+    .emoji-pick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .emoji-opt { width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid var(--border); background: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .emoji-opt.sel { border-color: var(--yellow); background: var(--yellow-light); }
+
+    .pill { display: inline-flex; align-items: center; gap: 4px; background: var(--yellow-light); border: 1px solid var(--yellow-mid); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; color: #7A6000; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════════════════════ HOME ═══════════════════════════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="home-top">
+      <div class="home-greeting">Hello Chris 👋</div>
+      <div class="home-title">ChrisCalendar</div>
+      <div class="home-date" id="home-date"></div>
+    </div>
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+      <span class="month-label" id="month-label"></span>
+      <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+    </div>
+    <div class="cal-wrap">
+      <div class="weekdays">
+        <div class="weekday">M</div><div class="weekday">T</div><div class="weekday">W</div>
+        <div class="weekday">T</div><div class="weekday">F</div><div class="weekday">S</div><div class="weekday">S</div>
+      </div>
+      <div class="days-grid" id="days-grid"></div>
+    </div>
+    <div class="scroll">
+      <div class="day-section">
+        <div class="day-section-label" id="selected-label"></div>
+        <div id="task-list"></div>
+      </div>
+      <button class="add-btn" onclick="goAddTask()">＋ Add task</button>
+      <div style="height:8px;"></div>
+    </div>
+    <div style="border-top:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:flex-end; padding:10px 20px;">
+      <button class="icon-btn" onclick="goScreen('screen-categories')" title="Manage categories">⚙️</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ TASK DETAIL ═══════════════════════ -->
+  <div class="screen" id="screen-detail">
+    <div class="detail-header-wrap">
+      <div style="display:flex;align-items:center;gap:10px;padding:14px 20px 10px;background:var(--surface);border-bottom:1px solid var(--border);">
+        <button class="back-btn" onclick="goBack()">&#8249;</button>
+        <div class="detail-icon" id="detail-icon"></div>
+        <div class="detail-title-wrap">
+          <div class="detail-title" id="detail-title-text"></div>
+          <div class="detail-sub" id="detail-sub"></div>
+        </div>
+      </div>
+      <div class="notif-row">
+        <span style="font-size:16px;">🔔</span>
+        <label>Notify 1hr before</label>
+        <input type="time" id="notif-time" value="09:00" style="margin-right:8px;" onchange="saveNotifTime()" />
+        <button class="toggle" id="notif-toggle" onclick="toggleNotif()"></button>
+      </div>
+    </div>
+    <div class="scroll" id="detail-scroll">
+      <div class="fav-section" id="fav-section"></div>
+      <div class="checklist-wrap" id="checklist-wrap"></div>
+    </div>
+    <div class="add-item-row">
+      <input type="text" id="new-item-input" placeholder="Add item…" onkeydown="if(event.key==='Enter')addItem()" />
+      <button onclick="addItem()">Add</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ ADD TASK ══════════════════════════ -->
+  <div class="screen" id="screen-add-task">
+    <div class="header">
+      <button class="back-btn" onclick="goBack()">&#8249;</button>
+      <span class="header-sub">Add task</span>
+    </div>
+    <div class="scroll">
+      <div id="add-task-fav-section"></div>
+      <div id="add-task-all-section"></div>
+      <div class="section-title">Task type</div>
+      <div class="type-pick">
+        <button class="type-btn selected" id="type-once" onclick="selectType('once')">One-time</button>
+        <button class="type-btn" id="type-recur" onclick="selectType('recur')">Recurring</button>
+      </div>
+      <div id="recur-section" style="display:none;">
+        <div class="section-title">Repeat on</div>
+        <div class="recur-days" id="recur-days"></div>
+      </div>
+      <button class="confirm-btn" id="confirm-add-btn" onclick="confirmAddTask()" disabled>Add to <span id="confirm-date-label"></span></button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ CATEGORIES ════════════════════════ -->
+  <div class="screen" id="screen-categories">
+    <div class="header">
+      <button class="back-btn" onclick="goBack()">&#8249;</button>
+      <span class="header-sub">Categories</span>
+    </div>
+    <div class="scroll">
+      <div class="cat-manage" id="cat-manage-list"></div>
+      <div class="new-cat-form">
+        <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:10px;">New category</div>
+        <input type="text" id="new-cat-name" placeholder="Category name…" />
+        <div class="emoji-pick" id="emoji-pick"></div>
+        <button class="confirm-btn" style="margin:0;width:100%;" onclick="createCategory()">Create</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════ STATE ═══════════════════
+const EMOJIS = ['🛒','💪','🧹','🍽️','📚','🎮','💊','🐕','🚗','✈️','💼','🏠','🌿','🎵','🎨'];
+const COLORS = ['#FFF3CD','#E8F5E9','#E3F2FD','#FCE4EC','#F3E5F5','#E0F2F1','#FBE9E7','#E8EAF6'];
+
+let categories = JSON.parse(localStorage.getItem('cc_cats') || 'null') || [
+  {id:'shopping', name:'Shopping', emoji:'🛒', color:'#E8F5E9', fav:true},
+  {id:'training', name:'Training', emoji:'💪', color:'#FFF3CD', fav:true},
+  {id:'cleaning', name:'Cleaning', emoji:'🧹', color:'#E3F2FD', fav:false},
+];
+
+let tasks = JSON.parse(localStorage.getItem('cc_tasks') || '{}');
+// tasks[dateStr] = [{catId, notif:bool, notifTime:'09:00', items:[{text,done,fav}], recurId?}]
+
+let recurringRules = JSON.parse(localStorage.getItem('cc_recur') || '[]');
+// [{id, catId, days:[0..6 mon=0], notif, notifTime}]
+
+let favItems = JSON.parse(localStorage.getItem('cc_favitems') || '{}');
+// favItems[catId] = ['Milk','Bench press',...]
+
+let selectedDate = todayStr();
+let viewYear = new Date().getFullYear();
+let viewMonth = new Date().getMonth();
+let screenStack = ['screen-home'];
+let addTaskCatId = null;
+let addTaskType = 'once';
+let addTaskDays = [];
+let currentTaskRef = null; // {date, index}
+
+function save() {
+  localStorage.setItem('cc_cats', JSON.stringify(categories));
+  localStorage.setItem('cc_tasks', JSON.stringify(tasks));
+  localStorage.setItem('cc_recur', JSON.stringify(recurringRules));
+  localStorage.setItem('cc_favitems', JSON.stringify(favItems));
+}
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dateStr(y,m,d) {
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function getCat(id) { return categories.find(c=>c.id===id); }
+
+// ═══════════════════ RECURRING INJECTION ═══════════════════
+function ensureRecurringForDate(ds) {
+  const d = new Date(ds+'T12:00:00');
+  const dow = (d.getDay()+6)%7; // mon=0
+  recurringRules.forEach(rule => {
+    if (!rule.days.includes(dow)) return;
+    if (!tasks[ds]) tasks[ds] = [];
+    const exists = tasks[ds].find(t=>t.recurId===rule.id);
+    if (!exists) {
+      tasks[ds].push({catId:rule.catId, notif:rule.notif, notifTime:rule.notifTime, items:[], recurId:rule.id});
+    }
+  });
+}
+
+// ═══════════════════ NAVIGATION ═══════════════════
+function goScreen(id) {
+  const current = screenStack[screenStack.length-1];
+  if (current === id) return;
+  document.getElementById(current).classList.remove('active');
+  document.getElementById(current).classList.add('behind');
+  document.getElementById(id).classList.remove('behind');
+  document.getElementById(id).classList.add('active');
+  screenStack.push(id);
+}
+
+function goBack() {
+  if (screenStack.length <= 1) return;
+  const current = screenStack.pop();
+  const prev = screenStack[screenStack.length-1];
+  document.getElementById(current).classList.remove('active');
+  document.getElementById(prev).classList.remove('behind');
+  document.getElementById(prev).classList.add('active');
+  renderHome();
+}
+
+// ═══════════════════ HOME ═══════════════════
+function renderHome() {
+  const today = new Date();
+  document.getElementById('home-date').textContent = today.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  renderCalendar();
+  renderTaskList();
+}
+
+function renderCalendar() {
+  const label = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+  document.getElementById('month-label').textContent = label;
+  const grid = document.getElementById('days-grid');
+  grid.innerHTML = '';
+  const firstDow = (new Date(viewYear,viewMonth,1).getDay()+6)%7;
+  const daysInMonth = new Date(viewYear,viewMonth+1,0).getDate();
+  const daysInPrev = new Date(viewYear,viewMonth,0).getDate();
+  const today = todayStr();
+
+  // prev month filler
+  for (let i=0;i<firstDow;i++) {
+    const cell = document.createElement('div');
+    cell.className='day-cell other-month';
+    cell.innerHTML=`<div class="day-num">${daysInPrev-firstDow+1+i}</div>`;
+    grid.appendChild(cell);
+  }
+
+  for (let d=1;d<=daysInMonth;d++) {
+    const ds = dateStr(viewYear,viewMonth,d);
+    ensureRecurringForDate(ds);
+    const cell = document.createElement('div');
+    let cls='day-cell';
+    if (ds===today) cls+=' today';
+    if (ds===selectedDate) cls+=' selected';
+    cell.className=cls;
+
+    let dots='';
+    (tasks[ds]||[]).forEach(t=>{
+      const cat=getCat(t.catId);
+      if(cat) dots+=`<div class="dot" style="background:${dotColor(cat.color)}"></div>`;
+    });
+
+    cell.innerHTML=`<div class="day-num">${d}</div><div class="dot-row">${dots}</div>`;
+    cell.onclick=()=>selectDate(ds);
+    grid.appendChild(cell);
+  }
+}
+
+function dotColor(hex) {
+  // darken the category color for dots
+  return hex.replace(/^#/,'') ? adjustColor(hex, -60) : '#888';
+}
+
+function adjustColor(hex, amt) {
+  let r=parseInt(hex.slice(1,3),16)+amt, g=parseInt(hex.slice(3,5),16)+amt, b=parseInt(hex.slice(5,7),16)+amt;
+  r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
+  return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+}
+
+function selectDate(ds) {
+  selectedDate = ds;
+  renderCalendar();
+  renderTaskList();
+}
+
+function changeMonth(dir) {
+  viewMonth+=dir;
+  if(viewMonth<0){viewMonth=11;viewYear--;}
+  if(viewMonth>11){viewMonth=0;viewYear++;}
+  renderCalendar();
+}
+
+function renderTaskList() {
+  const d = new Date(selectedDate+'T12:00:00');
+  const isToday = selectedDate===todayStr();
+  const label = (isToday?'Today — ':'')+d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('selected-label').textContent = label;
+
+  ensureRecurringForDate(selectedDate);
+  const list = document.getElementById('task-list');
+  list.innerHTML='';
+  const dayTasks = tasks[selectedDate]||[];
+
+  if(dayTasks.length===0) {
+    list.innerHTML='<div class="empty-day">No tasks — tap Add task below</div>';
+    return;
+  }
+
+  dayTasks.forEach((task,i)=>{
+    const cat = getCat(task.catId);
+    if(!cat) return;
+    const done = task.items.filter(x=>x.done).length;
+    const total = task.items.length;
+    const card = document.createElement('div');
+    card.className='task-card';
+    const recurBadge = task.recurId ? '<span class="recur-badge">Recurring</span>' : '';
+    const notifDot = task.notif ? '<span class="notif-dot"></span>' : '';
+    card.innerHTML=`
+      <div class="task-icon-wrap" style="background:${cat.color}">${cat.emoji}</div>
+      <div class="task-info">
+        <div class="task-name">${cat.name}</div>
+        <div class="task-meta">${total>0?`${done}/${total} done`:'No items yet'} ${recurBadge} ${notifDot}</div>
+      </div>
+      <span class="task-chevron">›</span>`;
+    card.onclick=()=>openTask(selectedDate,i);
+    list.appendChild(card);
+  });
+}
+
+// ═══════════════════ TASK DETAIL ═══════════════════
+function openTask(ds, idx) {
+  currentTaskRef={date:ds,index:idx};
+  const task=(tasks[ds]||[])[idx];
+  if(!task) return;
+  const cat=getCat(task.catId);
+  if(!cat) return;
+
+  document.getElementById('detail-icon').style.background=cat.color;
+  document.getElementById('detail-icon').textContent=cat.emoji;
+  document.getElementById('detail-title-text').textContent=cat.name;
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('detail-sub').textContent=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+
+  const tog=document.getElementById('notif-toggle');
+  tog.className='toggle'+(task.notif?' on':'');
+  document.getElementById('notif-time').value=task.notifTime||'09:00';
+
+  renderFavChips(task.catId);
+  renderChecklist();
+  goScreen('screen-detail');
+}
+
+function renderFavChips(catId) {
+  const favs = (favItems[catId]||[]);
+  const section = document.getElementById('fav-section');
+  if(favs.length===0){section.innerHTML='';return;}
+  section.innerHTML=`<div class="fav-label">⭐ Quick add</div><div class="fav-chips" id="fav-chips-row"></div>`;
+  const row=document.getElementById('fav-chips-row');
+  favs.forEach(text=>{
+    const chip=document.createElement('button');
+    chip.className='fav-chip';
+    chip.textContent=text;
+    chip.onclick=()=>addItemText(text);
+    row.appendChild(chip);
+  });
+}
+
+function renderChecklist() {
+  const ref=currentTaskRef;
+  const task=(tasks[ref.date]||[])[ref.index];
+  if(!task) return;
+  const wrap=document.getElementById('checklist-wrap');
+  wrap.innerHTML='';
+  task.items.forEach((item,i)=>{
+    const row=document.createElement('div');
+    row.className='check-item';
+    row.innerHTML=`
+      <button class="checkbox ${item.done?'done':''}" onclick="toggleItem(${i})"></button>
+      <span class="check-label ${item.done?'done':''}" onclick="toggleItem(${i})">${item.text}</span>
+      <button class="star-btn ${item.fav?'fav':''}" onclick="toggleFavItem(${i})" title="${item.fav?'Unfavourite':'Favourite'}">★</button>
+      <button class="del-btn" onclick="deleteItem(${i})" title="Delete">✕</button>`;
+    wrap.appendChild(row);
+  });
+  save();
+}
+
+function toggleItem(i) {
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  task.items[i].done=!task.items[i].done;
+  renderChecklist();
+}
+
+function toggleFavItem(i) {
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  const item=task.items[i];
+  item.fav=!item.fav;
+  if(!favItems[task.catId]) favItems[task.catId]=[];
+  if(item.fav) { if(!favItems[task.catId].includes(item.text)) favItems[task.catId].push(item.text); }
+  else { favItems[task.catId]=favItems[task.catId].filter(x=>x!==item.text); }
+  renderFavChips(task.catId);
+  renderChecklist();
+}
+
+function deleteItem(i) {
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  task.items.splice(i,1);
+  renderChecklist();
+}
+
+function addItem() {
+  const input=document.getElementById('new-item-input');
+  addItemText(input.value.trim());
+  input.value='';
+}
+
+function addItemText(text) {
+  if(!text) return;
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  if(task.items.find(x=>x.text===text)) return;
+  task.items.push({text,done:false,fav:false});
+  renderChecklist();
+  renderFavChips(task.catId);
+  renderTaskList();
+}
+
+function toggleNotif() {
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  task.notif=!task.notif;
+  const tog=document.getElementById('notif-toggle');
+  tog.className='toggle'+(task.notif?' on':'');
+  if(task.notif) scheduleNotif(task);
+  save();
+}
+
+function saveNotifTime() {
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  task.notifTime=document.getElementById('notif-time').value;
+  save();
+}
+
+function scheduleNotif(task) {
+  if(!('Notification' in window)) return;
+  Notification.requestPermission().then(p=>{
+    if(p!=='granted') return;
+    const [h,m]=task.notifTime.split(':').map(Number);
+    const cat=getCat(task.catId);
+    const d=new Date(currentTaskRef.date+'T12:00:00');
+    d.setHours(h-1,m,0,0);
+    const now=new Date();
+    const delay=d-now;
+    if(delay>0) setTimeout(()=>{new Notification('ChrisCalendar',{body:`Reminder: ${cat.name} task today`,icon:'icon.svg'});},delay);
+  });
+}
+
+// ═══════════════════ ADD TASK ═══════════════════
+function goAddTask() {
+  addTaskCatId=null;
+  addTaskType='once';
+  addTaskDays=[];
+  renderAddTask();
+  goScreen('screen-add-task');
+}
+
+function renderAddTask() {
+  const d=new Date(selectedDate+'T12:00:00');
+  document.getElementById('confirm-date-label').textContent=d.toLocaleDateString('en-GB',{day:'numeric',month:'long'});
+
+  const favCats=categories.filter(c=>c.fav);
+  const otherCats=categories.filter(c=>!c.fav);
+
+  function catRow(cat) {
+    const sel=addTaskCatId===cat.id;
+    return `<div class="cat-option ${sel?'selected':''}" style="${sel?'background:var(--yellow-light);':''}" onclick="selectAddCat('${cat.id}')">
+      <div class="cat-icon" style="background:${cat.color}">${cat.emoji}</div>
+      <span class="cat-name">${cat.name}</span>
+      <button class="cat-star ${cat.fav?'fav':''}" onclick="event.stopPropagation();toggleCatFav('${cat.id}')">${cat.fav?'★':'☆'}</button>
+    </div>`;
+  }
+
+  let favHtml='', allHtml='';
+  if(favCats.length>0) {
+    favHtml=`<div class="section-title">⭐ Favourites</div>`+favCats.map(catRow).join('');
+  }
+  if(otherCats.length>0) {
+    allHtml=`<div class="section-title">All categories</div>`+otherCats.map(catRow).join('');
+  }
+
+  document.getElementById('add-task-fav-section').innerHTML=favHtml;
+  document.getElementById('add-task-all-section').innerHTML=allHtml;
+
+  document.getElementById('type-once').className='type-btn'+(addTaskType==='once'?' selected':'');
+  document.getElementById('type-recur').className='type-btn'+(addTaskType==='recur'?' selected':'');
+  document.getElementById('recur-section').style.display=addTaskType==='recur'?'block':'none';
+
+  const days=['M','T','W','T','F','S','S'];
+  document.getElementById('recur-days').innerHTML=days.map((d,i)=>`<button class="day-toggle ${addTaskDays.includes(i)?'on':''}" onclick="toggleRecurDay(${i})">${d}</button>`).join('');
+
+  document.getElementById('confirm-add-btn').disabled=!addTaskCatId;
+}
+
+function selectAddCat(id) {
+  addTaskCatId=id;
+  renderAddTask();
+}
+
+function toggleCatFav(id) {
+  const cat=getCat(id);
+  if(cat) cat.fav=!cat.fav;
+  save();
+  renderAddTask();
+}
+
+function selectType(t) {
+  addTaskType=t;
+  renderAddTask();
+}
+
+function toggleRecurDay(i) {
+  if(addTaskDays.includes(i)) addTaskDays=addTaskDays.filter(x=>x!==i);
+  else addTaskDays.push(i);
+  renderAddTask();
+}
+
+function confirmAddTask() {
+  if(!addTaskCatId) return;
+  if(addTaskType==='recur') {
+    if(addTaskDays.length===0) { alert('Pick at least one day for recurring task.'); return; }
+    const rule={id:'r'+Date.now(), catId:addTaskCatId, days:[...addTaskDays], notif:false, notifTime:'09:00'};
+    recurringRules.push(rule);
+    // inject today and selected date
+    ensureRecurringForDate(selectedDate);
+  } else {
+    if(!tasks[selectedDate]) tasks[selectedDate]=[];
+    const already=tasks[selectedDate].find(t=>t.catId===addTaskCatId&&!t.recurId);
+    if(!already) tasks[selectedDate].push({catId:addTaskCatId,notif:false,notifTime:'09:00',items:[]});
+  }
+  save();
+  goBack();
+}
+
+// ═══════════════════ CATEGORIES SCREEN ═══════════════════
+function renderCategoriesScreen() {
+  const list=document.getElementById('cat-manage-list');
+  list.innerHTML=categories.map(cat=>`
+    <div class="cat-row">
+      <div class="cat-row-icon" style="background:${cat.color}">${cat.emoji}</div>
+      <span class="cat-row-name">${cat.name}</span>
+      <button class="cat-star ${cat.fav?'fav':''}" onclick="toggleCatFavManage('${cat.id}')">${cat.fav?'★':'☆'}</button>
+      <button class="del-btn" onclick="deleteCategory('${cat.id}')">🗑</button>
+    </div>`).join('');
+
+  const emojis=document.getElementById('emoji-pick');
+  emojis.innerHTML=EMOJIS.map((e,i)=>`<button class="emoji-opt" onclick="selectEmoji(${i})">${e}</button>`).join('');
+}
+
+let selectedEmoji = EMOJIS[0];
+let selectedColor = COLORS[0];
+function selectEmoji(i) {
+  selectedEmoji=EMOJIS[i];
+  document.querySelectorAll('.emoji-opt').forEach((b,j)=>b.className='emoji-opt'+(j===i?' sel':''));
+}
+
+function createCategory() {
+  const name=document.getElementById('new-cat-name').value.trim();
+  if(!name) return;
+  const id='cat'+Date.now();
+  const colorIdx=categories.length%COLORS.length;
+  categories.push({id,name,emoji:selectedEmoji,color:COLORS[colorIdx],fav:false});
+  document.getElementById('new-cat-name').value='';
+  save();
+  renderCategoriesScreen();
+}
+
+function toggleCatFavManage(id) {
+  const cat=getCat(id);
+  if(cat) cat.fav=!cat.fav;
+  save();
+  renderCategoriesScreen();
+}
+
+function deleteCategory(id) {
+  if(!confirm('Delete this category? Tasks using it will remain but show as unknown.')) return;
+  categories=categories.filter(c=>c.id!==id);
+  save();
+  renderCategoriesScreen();
+}
+
+// intercept goScreen for categories
+const origGoScreen=goScreen;
+document.querySelector('[onclick="goScreen(\'screen-categories\')"]').onclick=function(){
+  renderCategoriesScreen();
+  origGoScreen('screen-categories');
+};
+
+// ═══════════════════ INIT ═══════════════════
+renderHome();
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js");}</script>
+</body>
+</html>
