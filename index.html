@@ -205,6 +205,18 @@
     .emoji-opt.sel { border-color: var(--yellow); background: var(--yellow-light); }
 
     .pill { display: inline-flex; align-items: center; gap: 4px; background: var(--yellow-light); border: 1px solid var(--yellow-mid); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 600; color: #7A6000; }
+
+    /* DELETE MODAL */
+    .del-modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .del-modal-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.45; }
+    .del-modal-actions { display: flex; flex-direction: column; gap: 10px; }
+    .del-modal-btn { width: 100%; padding: 14px; border-radius: var(--radius); border: none; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: opacity 0.15s; text-align: center; }
+    .del-modal-btn:active { opacity: 0.75; }
+    .del-modal-btn.danger { background: #FF3B30; color: #fff; }
+    .del-modal-btn.danger-soft { background: #FEF2F2; color: #CC2020; border: 1px solid #FECACA; }
+    .del-modal-btn.cancel { background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border); margin-top: 4px; }
+    .dark-mode .del-modal-btn.danger-soft { background: #2A1010; color: #FF6B6B; border-color: #5C2020; }
+    .dark-mode .del-modal-btn.cancel { background: var(--surface); }
     .del-task-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #FECACA; background: #FEF2F2; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; transition: background 0.15s; }
     .del-task-btn:active { background: #FECACA; }
   </style>
@@ -240,6 +252,16 @@
           <button class="picker-year-btn" onclick="changePickerYear(1)">&#8250;</button>
         </div>
         <div class="picker-months" id="picker-months"></div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="picker-overlay" id="del-overlay">
+      <div class="picker-sheet" id="del-sheet">
+        <div class="picker-handle"></div>
+        <div class="del-modal-title" id="del-modal-title"></div>
+        <div class="del-modal-sub" id="del-modal-sub"></div>
+        <div class="del-modal-actions" id="del-modal-actions"></div>
       </div>
     </div>
     <div class="cal-wrap">
@@ -698,28 +720,63 @@ function clearTaskTime() {
 
 function deleteTask() {
   const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  if(!task) return;
   const cat=getCat(task.catId);
+  const catName = cat ? cat.name : 'this task';
   const isRecur=!!task.recurId;
+
+  const title = document.getElementById('del-modal-title');
+  const sub = document.getElementById('del-modal-sub');
+  const actions = document.getElementById('del-modal-actions');
+
   if(isRecur) {
-    const choice=confirm(`This is a recurring task.\n\nOK = delete only on this day\nCancel = delete all future occurrences`);
-    if(choice) {
-      // just remove from this day
-      tasks[currentTaskRef.date].splice(currentTaskRef.index,1);
-    } else {
-      // remove the rule and all injected instances
-      const ruleId=task.recurId;
-      recurringRules=recurringRules.filter(r=>r.id!==ruleId);
-      Object.keys(tasks).forEach(ds=>{
-        tasks[ds]=tasks[ds].filter(t=>t.recurId!==ruleId);
-        if(tasks[ds].length===0) delete tasks[ds];
-      });
-    }
+    title.textContent = `Delete "${catName}"?`;
+    sub.textContent = 'This is a recurring task. Choose how to delete it.';
+    actions.innerHTML = `
+      <button class="del-modal-btn danger-soft" onclick="confirmDeleteRecurOne()">Remove only this day</button>
+      <button class="del-modal-btn danger" onclick="confirmDeleteRecurAll()">Delete all future occurrences</button>
+      <button class="del-modal-btn cancel" onclick="closeDelModal()">Keep it</button>`;
   } else {
-    if(!confirm(`Remove ${cat?cat.name:'this task'} from this day?`)) return;
-    tasks[currentTaskRef.date].splice(currentTaskRef.index,1);
-    if(tasks[currentTaskRef.date].length===0) delete tasks[currentTaskRef.date];
+    title.textContent = `Delete "${catName}"?`;
+    sub.textContent = 'This will remove the task from this day only.';
+    actions.innerHTML = `
+      <button class="del-modal-btn danger" onclick="confirmDeleteOnce()">Delete task</button>
+      <button class="del-modal-btn cancel" onclick="closeDelModal()">Keep it</button>`;
   }
+
+  document.getElementById('del-overlay').classList.add('open');
+}
+
+function closeDelModal() {
+  document.getElementById('del-overlay').classList.remove('open');
+}
+
+function confirmDeleteOnce() {
+  tasks[currentTaskRef.date].splice(currentTaskRef.index,1);
+  if(tasks[currentTaskRef.date].length===0) delete tasks[currentTaskRef.date];
   save();
+  closeDelModal();
+  goBack();
+}
+
+function confirmDeleteRecurOne() {
+  tasks[currentTaskRef.date].splice(currentTaskRef.index,1);
+  if((tasks[currentTaskRef.date]||[]).length===0) delete tasks[currentTaskRef.date];
+  save();
+  closeDelModal();
+  goBack();
+}
+
+function confirmDeleteRecurAll() {
+  const task=(tasks[currentTaskRef.date]||[])[currentTaskRef.index];
+  const ruleId=task.recurId;
+  recurringRules=recurringRules.filter(r=>r.id!==ruleId);
+  Object.keys(tasks).forEach(ds=>{
+    tasks[ds]=tasks[ds].filter(t=>t.recurId!==ruleId);
+    if(tasks[ds].length===0) delete tasks[ds];
+  });
+  save();
+  closeDelModal();
   goBack();
 }
 
